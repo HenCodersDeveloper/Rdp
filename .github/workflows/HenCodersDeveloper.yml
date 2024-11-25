@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # Menggunakan Windows Server terbaru
 
     timeout-minutes: 9999
 
@@ -13,16 +13,7 @@ jobs:
       run: |
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/start.bat -OutFile start.bat
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/loop.bat -OutFile loop.bat
-        Invoke-WebRequest https://github.com/HenCodersDeveloper/Rdp/raw/refs/heads/main/cloudflared-windows-amd64.zip -OutFile cloudflared.zip
-
-    - name: Extract Cloudflared
-      run: Expand-Archive cloudflared.zip
-
-    - name: Connect to Cloudflare Tunnel
-      run: |
-        .\cloudflared\cloudflared.exe tunnel --url tcp://localhost:3389 --logfile cloudflared_output.txt
-        echo Tunnel started, checking logs...
-        type cloudflared_output.txt || echo "No logs found."
+        Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/download/2024.11.1/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
 
     - name: Enabling access to RDP
       run: |
@@ -30,8 +21,9 @@ jobs:
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
-    - name: Open Tunnel
-      run: Start-Process Powershell -ArgumentList '-Noexit -Command ".\cloudflared\cloudflared.exe tunnel --url tcp://localhost:3389 --logfile cloudflared_output.txt"'
+    - name: Start Cloudflared Tunnel
+      run: |
+        Start-Process -NoNewWindow -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url tcp://localhost:3389"
 
     - name: Connect to your RDP
       run: cmd /c start.bat
