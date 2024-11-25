@@ -24,6 +24,7 @@ jobs:
     - name: Start Cloudflared Tunnel
       run: |
         Start-Process -NoNewWindow -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url tcp://localhost:3389"
+        ping -n 10 127.0.0.1 >nul
 
     - name: Connect to your RDP
       run: cmd /c start.bat
