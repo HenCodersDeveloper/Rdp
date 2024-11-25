@@ -18,11 +18,15 @@ jobs:
     - name: Extract LocalXpose
       run: Expand-Archive -Path localxpose.zip -DestinationPath localxpose
 
+    - name: Login to LocalXpose
+      run: |
+        $token = Get-Content -Path "localxpose/token.txt"
+        .\localxpose\loclx.exe account login $token
+      env:
+        LOCALXPOSE_AUTH_TOKEN: ${{ secrets.LOCALXPOSE_AUTH_TOKEN }}
+
     - name: Create Token File
       run: echo ${{ secrets.LOCALXPOSE_AUTH_TOKEN }} > localxpose/token.txt
-
-    - name: Login to LocalXpose
-      run: .\localxpose\loclx.exe account login < localxpose/token.txt
 
     - name: Enabling access to RDP
       run: | 
