@@ -1,7 +1,11 @@
 @echo off
 echo RDP CREATION SUCCESSFUL!
-tasklist | find /i "ssh.exe" >nul && goto check || echo "Unable to get Serveo tunnel. Please ensure the workflow logs show a valid Serveo subdomain." & ping 127.0.0.1 >nul & exit
+
+:: Memeriksa apakah Cloudflared tunnel berjalan
+tasklist | find /i "cloudflared.exe" >nul && goto check || echo "Unable to get Cloudflare tunnel. Please ensure the workflow logs show a valid Cloudflare hostname." & ping 127.0.0.1 >nul & exit
+
 :check
+:: Memastikan server masih berjalan
 ping 127.0.0.1 >nul
 cls
 echo RDP CREATION SUCCESSFUL!
