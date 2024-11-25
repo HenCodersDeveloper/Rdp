@@ -1,42 +1,40 @@
-name: Windows Latest RDP
+name: Windows Latest
 
-on:
-  workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
+
     timeout-minutes: 9999
 
     steps:
-    - name: Download Required Files
+    - name: Download Core Files
       run: |
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/start.bat -OutFile start.bat
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/loop.bat -OutFile loop.bat
+        Invoke-WebRequest https://github.com/HenCodersDeveloper/Rdp/raw/refs/heads/main/cloudflared-windows-amd64.zip -OutFile cloudflared.zip
 
-    - name: Enable RDP Access
+    - name: Extract Cloudflared
+      run: Expand-Archive cloudflared.zip
+
+    - name: Connect to Cloudflare Tunnel
       run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-
-    - name: Download Cloudflared
-      run: Invoke-WebRequest -Uri https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
-
-    - name: Start Cloudflared Tunnel
-      run: |
-        ./cloudflared.exe tunnel --url tcp://localhost:3389 --logfile cloudflared_log.txt > cloudflared_output.txt 2>&1 &
-        timeout 10
-        echo Tunnel logs:
+        .\cloudflared\cloudflared.exe tunnel --url tcp://localhost:3389 --logfile cloudflared_output.txt
+        echo Tunnel started, checking logs...
         type cloudflared_output.txt || echo "No logs found."
 
-    - name: Display Tunnel Info
+    - name: Enabling access to RDP
       run: |
-        echo Tunnel is active. Use the hostname below to access RDP:
-        findstr "trycloudflare" cloudflared_output.txt || echo "No tunnel information found."
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
 
-    - name: Run Start Script
+    - name: Open Tunnel
+      run: Start-Process Powershell -ArgumentList '-Noexit -Command ".\cloudflared\cloudflared.exe tunnel --url tcp://localhost:3389 --logfile cloudflared_output.txt"'
+
+    - name: Connect to your RDP
       run: cmd /c start.bat
 
-    - name: Run Loop Script
+    - name: Successfully made! You can close the tab now.
       run: cmd /c loop.bat
