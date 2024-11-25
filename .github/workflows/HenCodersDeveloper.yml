@@ -1,39 +1,40 @@
-name: Windows Latest
+name: Windows Latest RDP
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # Menggunakan sistem operasi Windows terbaru
 
     timeout-minutes: 9999
 
     steps:
-    - name: Download Core Files
+    - name: Download Required Files
       run: |
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/start.bat -OutFile start.bat
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/loop.bat -OutFile loop.bat
+        Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/start.bat -OutFile start.bat
+        Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/loop.bat -OutFile loop.bat
 
-    - name: Install OpenSSH (If not already installed)
+    - name: Setup RDP Access
       run: |
-        $OpenSshInstalled = Get-WindowsCapability -Online | Where-Object { $_.Name -like 'OpenSSH.Client*' -and $_.State -eq 'Installed' }
-        if (-not $OpenSshInstalled) {
-          Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
-        }
-        Get-WindowsCapability -Online | Where-Object { $_.Name -like 'OpenSSH.Client*' }
-
-    - name: Enabling access to RDP
-      run: | 
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
-    - name: Open Serveo Tunnel
+    - name: Start Serveo Tunnel
       run: |
-        Start-Process Powershell -ArgumentList '-Noexit -Command "ssh -R 3389:localhost:3389 serveo.net"'
+        echo y | ssh -R 3389:localhost:3389 serveo.net > serveo_log.txt 2>&1
+      env:
+        SSH_AUTH_SOCK: ""
 
-    - name: Connect to your RDP
+    - name: Display Serveo Subdomain
+      run: |
+        echo Serveo Tunnel Information:
+        findstr "Forwarding" serveo_log.txt || echo "Serveo Tunnel Error: Please check the SSH connection."
+        echo Access RDP using the subdomain displayed above.
+
+    - name: Run Start Script
       run: cmd /c start.bat
 
-    - name: Successfully made! You can close the tab now.
+    - name: Run Loop Script
       run: cmd /c loop.bat
