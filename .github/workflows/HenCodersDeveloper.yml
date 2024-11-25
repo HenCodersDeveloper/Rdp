@@ -1,12 +1,11 @@
 name: Windows Latest RDP
 
-on: 
+on:
   workflow_dispatch
 
 jobs:
   build:
-    runs-on: windows-latest  # Menggunakan sistem operasi Windows terbaru
-
+    runs-on: windows-latest
     timeout-minutes: 9999
 
     steps:
@@ -15,23 +14,26 @@ jobs:
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/start.bat -OutFile start.bat
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/loop.bat -OutFile loop.bat
 
-    - name: Setup RDP Access
+    - name: Enable RDP Access
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
-    - name: Start Serveo Tunnel
-      run: |
-        echo y | ssh -R 3389:localhost:3389 serveo.net > serveo_log.txt 2>&1
-      env:
-        SSH_AUTH_SOCK: ""
+    - name: Download Cloudflared
+      run: Invoke-WebRequest -Uri https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
 
-    - name: Display Serveo Subdomain
+    - name: Start Cloudflared Tunnel
       run: |
-        echo Serveo Tunnel Information:
-        findstr "Forwarding" serveo_log.txt || echo "Serveo Tunnel Error: Please check the SSH connection."
-        echo Access RDP using the subdomain displayed above.
+        ./cloudflared.exe tunnel --url tcp://localhost:3389 --logfile cloudflared_log.txt > cloudflared_output.txt 2>&1 &
+        timeout 10
+        echo Tunnel logs:
+        type cloudflared_output.txt || echo "No logs found."
+
+    - name: Display Tunnel Info
+      run: |
+        echo Tunnel is active. Use the hostname below to access RDP:
+        findstr "trycloudflare" cloudflared_output.txt || echo "No tunnel information found."
 
     - name: Run Start Script
       run: cmd /c start.bat
