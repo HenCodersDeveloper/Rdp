@@ -6,7 +6,6 @@ REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" 
 net user administrator HenCoders2024 /add >nul
 net localgroup administrators administrator /add >nul
 net user administrator /active:yes >nul
-net user installer /delete >nul 2>&1
 diskperf -Y >nul
 sc config Audiosrv start= auto >nul
 sc start Audiosrv >nul
@@ -15,10 +14,14 @@ ICACLS C:\Windows\installer /grant administrator:F >nul
 
 echo Successfully Installed! If the RDP is dead, please rebuild again.
 echo Checking Serveo Tunnel...
-tasklist | find /i "ssh.exe" >nul && echo Serveo Tunnel is Active || echo Serveo tunnel is not running. Please ensure the workflow logs show a valid Serveo subdomain.
 
-echo IP: serveo.net
+:: Menyimpan output subdomain Serveo
+ssh -R 3389:localhost:3389 serveo.net > serveo_log.txt 2>&1
+
+:: Menampilkan subdomain Serveo di konsol
+findstr "Forwarding" serveo_log.txt || echo "Serveo Tunnel Error: Please check your workflow logs for details."
+
 echo Username: administrator
 echo Password: HenCoders2024
-echo Please log in to your RDP using the Serveo subdomain displayed in the workflow logs.
+echo Please log in to your RDP using the Serveo subdomain displayed above.
 ping -n 10 127.0.0.1 >nul
