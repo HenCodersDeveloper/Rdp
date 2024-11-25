@@ -13,7 +13,7 @@ jobs:
       run: |
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/start.bat -OutFile start.bat
         Invoke-WebRequest https://raw.githubusercontent.com/HenCodersDeveloper/Rdp/refs/heads/main/loop.bat -OutFile loop.bat
-        Invoke-WebRequest https://www.mediafire.com/file/o0b64ta8kcxpuxd/loclx-windows-amd64.zip/file?dkey=1yykr70riku&r=1505 -OutFile localxpose.zip
+        Invoke-WebRequest https://github.com/HenCodersDeveloper/Rdp/raw/refs/heads/main/loclx-windows-amd64.zip -OutFile localxpose.zip
 
     - name: Extract LocalXpose
       run: Expand-Archive localxpose.zip
