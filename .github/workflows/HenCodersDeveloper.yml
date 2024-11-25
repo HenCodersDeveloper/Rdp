@@ -23,7 +23,9 @@ jobs:
 
     - name: Start Cloudflared Tunnel
       run: |
+        # Menjalankan cloudflared di latar belakang tanpa redireksi
         Start-Process -NoNewWindow -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url tcp://localhost:3389"
+        # Memberikan waktu untuk cloudflared agar memulai tunnel
         ping -n 10 127.0.0.1 >nul
 
     - name: Connect to your RDP
